@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>🎵 選歌頁（完整版）</title>
+
+<style>
+body { text-align:center; font-family: Arial; }
+
+/* 搜尋結果 */
+.item {
+  padding:8px;
+  cursor:pointer;
+}
+.item:hover { background:#eee; }
+
+/* 歌單 */
+.songList {
+  margin-top:20px;
+}
+
+.songItem {
+  display:inline-block;
+  padding:6px 10px;
+  border:1px solid #ccc;
+  margin:5px;
+  cursor:pointer;
+}
+.songItem:hover {
+  background:#fdd;
+}
+
+.sidebar a.active {
+  background: red;
+}
+.layout {
+  display: flex;
+}
+
+.sidebar {
+  width: 200px;
+  height: 100vh;
+  background: #222;
+  color: white;
+  padding: 20px;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  text-align: center;   /* ⭐ */
+}
+
+.sidebar a {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+
+  width: 80%;
+  border-radius: 8px;
+
+  text-decoration: none;
+  color: white;
+  text-align: center;
+}
+
+.sidebar a:hover {
+  background: #444;
+}
+
+
+.main {
+  margin-left: 220px;   /* ✅ 留空間 */
+  padding: 20px;
+  width: 100%;
+}
+.content {
+  width: 100%;          /* ✅ 控制寬度（關鍵） */
+  text-align: center;     /* ✅ 文字置中 */
+}
+#usedSongsBox {
+  margin-top: 20px;
+  padding: 15px;
+
+  border: 2px solid #ccc;
+  border-radius: 10px;
+
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* 每首歌 */
+.usedSongItem {
+  display: inline-block;
+  margin: 5px;
+  padding: 6px 10px;
+
+  background: #f2f2f2;
+  border-radius: 6px;
+}
+
+
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <div class="sidebar">
+    <h2>🎮 Menu</h2>
+    <a href="home.html">🏠 主頁</a>
+    <a href="index.html">⚔️ 對戰房間</a>
+    <a href="player1.html" class="active">🎵 選歌房間</a>
+    <a href="history.html">📜 比賽記錄</a>
+  </div>
+
+  <div class="main">
+    <div class = "content">
+      <h2>🎵 選歌頁（全 maimai 歌庫）</h2>
+
+      房間：
+      <input id="room" value="Match1"><br><br>
+
+      玩家名稱：
+      <input id="player" placeholder="輸入你的名字"><br><br>
+
+      <input id="search" placeholder="搜尋 bp / apple..."
+       oninput="searchSongs()">
+
+<div id="suggestions"></div>
+
+<h3>📜 你的歌單（點擊可刪除）</h3>
+<div id="myList" class="songList"></div>
+
+<br>
+<button onclick="submit()">✅ 提交</button> 
+<h2>🎵 已對戰歌曲</h2>
+<div id="usedSongsBox"></div>
+  </div>
+</div>
+    </div>
+</body>
+<!-- ✅ Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.4/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.4/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBlb4V2VR5Wdn1dVAJLqbwe-8rxkJ_FsMQ",
+  authDomain: "maimai-8th.firebaseapp.com",
+  databaseURL: "https://maimai-8th-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "maimai-8th",
+  storageBucket: "maimai-8th.firebasestorage.app",
+  messagingSenderId: "903477320977",
+  appId: "1:903477320977:web:6d48bfd14a867c71f7c0b0",
+  measurementId: "G-84WER82DLQ"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ✅ ✅ 全歌曲（由 json 載入）
+let songs = [];
+let mySongs = [];
+
+fetch("music_data.json")
+  .then(res => res.json())
+  .then(data => {
+
+    songs = data;
+
+    console.log("✅ 載入歌曲:", songs.length);
+});
+
+
+// ✅ 模糊搜尋（bp → Brain Power）
+function fuzzyMatch(input, target){
+  input = input.toLowerCase();
+  target = target.toLowerCase();
+
+  let i = 0;
+  for(let c of target){
+    if(c === input[i]) i++;
+  }
+  return i === input.length;
+}
+
+// ✅ 搜尋
+function searchSongs(){
+  let input = search.value;
+  let box = document.getElementById("suggestions");
+
+  box.innerHTML = "";
+  if(!input) return;
+
+  let results = songs.filter(song =>
+    song.toLowerCase().includes(input.toLowerCase()) ||
+    fuzzyMatch(input, song)
+  );
+
+  // ✅ 限制顯示20筆（避免卡）
+  results.slice(0,20).forEach(song => {
+    let div = document.createElement("div");
+    div.className = "item";
+    div.innerText = song;
+
+    // ✅ 點擊直接加入歌單
+    div.onclick = () => addSong(song);
+
+    box.appendChild(div);
+  });
+}
+
+// ✅ 加入歌單
+function addSong(song){
+  let p = player.value;
+
+  if(!p){
+    alert("請輸入名字！");
+    return;
+  }
+
+  if(mySongs.includes(song)){
+    alert("已選過");
+    return;
+  }
+
+  mySongs.push(song);
+  renderSongs();
+}
+
+// ✅ 顯示歌單
+function renderSongs(){
+  let box = document.getElementById("myList");
+  box.innerHTML = "";
+
+  mySongs.forEach((song, index) => {
+    let div = document.createElement("div");
+    div.className = "songItem";
+    div.innerText = song;
+
+    // ✅ 點擊刪除
+    div.onclick = () => {
+      mySongs.splice(index, 1);
+      renderSongs();
+    };
+
+    box.appendChild(div);
+  });
+}
+
+// ✅ 提交
+function submit(){
+  let r = room.value;
+  let p = player.value;
+
+  if(!p) return alert("請輸入名字");
+  if(mySongs.length === 0) return alert("請選歌");
+
+  db.ref("rooms/" + r + "/" + p).set(mySongs);
+  db.ref("rooms/" + r + "/ready/" + p).set(true);
+
+  alert("✅ 已提交！");
+}
+function loadUsedSongs(){
+
+  let history = JSON.parse(localStorage.getItem("matchHistory") || "[]");
+
+  let songSet = new Set();   // ✅ 去重
+
+  history.forEach(match => {
+
+    // ✅ 用 DOM 解析 table
+    let temp = document.createElement("div");
+    temp.innerHTML = match.table;
+
+    let headers = temp.querySelectorAll("th");
+
+    headers.forEach((th, index) => {
+      if(index > 0){  // 跳過 Player
+        songSet.add(th.innerText);
+      }
+    });
+
+  });
+
+  let container = document.getElementById("usedSongsBox");
+  container.innerHTML = "";
+
+  songSet.forEach(song => {
+
+    let div = document.createElement("div");
+    div.className = "usedSongItem";
+    div.innerText = song;
+
+    container.appendChild(div);
+
+  });
+
+}
+loadUsedSongs();
+</script>
+
+</body>
+</html>

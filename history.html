@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>📜 比賽記錄</title>
+
+<style>
+.layout {
+  display: flex;
+}
+
+
+.sidebar {
+  width: 200px;
+  height: 100vh;
+  background: #222;
+  color: white;
+  padding: 20px;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  text-align: center;   /* ⭐ */
+}
+
+.sidebar a {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+
+  width: 80%;
+  border-radius: 8px;
+
+  text-decoration: none;
+  color: white;
+  text-align: center;
+}
+
+.sidebar a:hover {
+  background: #444;
+}
+
+
+.main {
+  margin-left: 220px;
+  padding: 20px;
+}
+
+.sidebar a.active {
+  background: red;
+}
+
+#historyList span {
+  display: inline-block;
+  width: 80px;
+  font-weight: bold;
+}
+
+#historyList > div {
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 30px;
+  background: #fafafa;
+}
+
+#historyList span {
+  display: inline-block;
+  min-width: 80px;
+  text-align: center;
+  font-weight: bold;
+}
+
+#historyList .winner {
+  color: red;
+  font-weight: bold;
+}
+
+button {
+  margin-left: 10px;
+  background: rgb(102, 80, 80);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: darkred;
+}
+/* ✅ 表格內文字 */
+#historyList table {
+  margin-top: 15px;
+  border-collapse: collapse;
+}
+
+/* ✅ 每格 spacing */
+#historyList td, 
+#historyList th {
+  padding: 10px 20px;     /* ⭐ 左右拉開 */
+  text-align: center;
+  font-size: 18px;
+}
+
+/* ✅ 玩家名靠左（更易睇） */
+#historyList td:first-child {
+  text-align: left;
+  padding-left: 20px;
+}
+
+/* ✅ 行距 */
+#historyList tr {
+  height: 40px;
+}
+
+/* ✅ 結果區 */
+#historyList > div > div:last-child {
+  text-align: center;    /* ⭐ 置中 */
+  margin-top: 15px;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.winner {
+  color: red;
+  font-size: 22px;
+  font-weight: bold;
+}
+.winCell {
+  background: #ffe0e0;
+  color: red;
+  font-weight: bold;
+  border-radius: 6px;
+  padding: 4px;
+}
+
+/* ✅ 卡片 */
+.matchCard {
+  position: relative;     /* ⭐ 必須 */
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  background: #f9f9f9;
+}
+
+/* ✅ X 按鈕 */
+.deleteBtn {
+  position: absolute;    /* ⭐ 關鍵 */
+  top: 10px;
+  right: 10px;
+
+  background: #6b5c5c;
+  color: #ff5c7c;
+
+  border: none;
+  border-radius: 8px;
+
+  width: 40px;
+  height: 40px;
+
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.deleteBtn:hover {
+  background: red;
+  color: white;
+}
+
+.matchCard:hover {
+  transform: scale(1.01);
+  transition: 0.2s;
+}
+
+#historyList table {
+  table-layout: fixed;   /* ⭐ 重點！固定格大小 */
+  width: 100%;
+}
+#historyList th,
+#historyList td {
+  width: 120px;          /* ✅ 固定寬 */
+  height: 50px;          /* ✅ 固定高 */
+  padding: 8px;
+
+  text-align: center;
+  vertical-align: middle;
+
+  overflow: hidden;       /* ✅ 超出隱藏 */
+  text-overflow: ellipsis;/* ✅ ... */
+  white-space: nowrap;    /* ✅ 不換行 */
+}
+
+#historyList td:first-child {
+  text-align: center !important;
+}
+.deleteSong {
+  margin-left: 6px;
+  color: red;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+
+</style>
+
+<body>
+
+<div class="layout">
+
+  <!-- ✅ 左邊menu -->
+  <div class="sidebar">
+    <h2>🎮 Menu</h2>
+    <a href="home.html">🏠 主頁</a>
+    <a href="index.html">⚔️ 對戰房間</a>
+    <a href="player1.html">🎵 選歌房間</a>
+    <a href="history.html" class="active">📜 比賽記錄</a>
+  </div>
+
+  <!-- ✅ ⭐ 右邊主內容（你缺少這個） -->
+  <div class="main">
+    
+    <h1>📜 比賽記錄</h1>
+    <div id="historyList"></div>
+
+  </div>
+
+</div>
+
+<script>
+    
+function loadHistory(){
+
+  let history = JSON.parse(localStorage.getItem("matchHistory") || "[]");
+
+  let container = document.getElementById("historyList");
+  container.innerHTML = "";
+
+  // ✅ 最新在上（可選）
+  history.slice().reverse().forEach((match, index) => {
+
+    let div = document.createElement("div");
+    div.style.marginBottom = "40px";
+    div.className = "matchCard";
+
+
+
+div.innerHTML = `
+  <button class="deleteBtn" onclick="deleteMatch(${index})">❌</button>
+
+  <h2>🏁 ${match.name}</h2>
+  ${match.table}
+
+  <div style="margin-top:10px; font-weight:bold;">
+    ${match.result}
+  </div>
+`;
+
+    container.appendChild(div);
+
+// ✅ ⭐ 在 history 裡幫每首歌加 delete X
+let matchIndex = index;   // 記住目前 match
+
+let table = div.querySelector("table");
+
+if(table){
+
+  let headers = table.querySelectorAll("th");
+
+  headers.forEach((th, i) => {
+
+    if(i > 0){ // skip Player 欄
+
+      let song = th.innerText;
+
+      th.innerHTML = `
+        ${song}
+        <span class="deleteSong" onclick="deleteSong(${matchIndex}, ${i})">❌</span>
+      `;
+    }
+
+  });
+
+}
+
+    // ✅ ✅ ✅ ⭐ 必須放在裡面！！
+// ✅ 把 input 變文字
+div.querySelectorAll("input").forEach(input => {
+
+  let value = input.value || input.getAttribute("value") || "";
+
+  let span = document.createElement("span");
+  span.innerText = value;
+
+  input.parentNode.replaceChild(span, input);
+});
+
+
+// ✅ ✅ ✅ ⭐ 每首歌判勝負（history版）
+let rows = div.querySelectorAll("table tr");
+
+if(rows.length >= 3){
+
+  for(let i = 1; i < rows[0].children.length; i++){
+
+    let p1Cell = rows[1].children[i];
+    let p2Cell = rows[2].children[i];
+
+    let p1Val = Number(p1Cell.innerText) || 0;
+    let p2Val = Number(p2Cell.innerText) || 0;
+
+    p1Cell.classList.remove("winCell");
+    p2Cell.classList.remove("winCell");
+
+    if(p1Val > p2Val){
+      p1Cell.classList.add("winCell");
+    }
+    else if(p2Val > p1Val){
+      p2Cell.classList.add("winCell");
+    }
+  }
+}
+  });
+}
+
+loadHistory();
+
+function deleteMatch(index){
+
+  let history = JSON.parse(localStorage.getItem("matchHistory") || "[]");
+
+  // ✅ 因為你 reverse 了 → index 要反轉回去
+  let realIndex = history.length - 1 - index;
+
+  history.splice(realIndex, 1);
+
+  localStorage.setItem("matchHistory", JSON.stringify(history));
+
+  loadHistory();  // ✅ 重新render
+}
+
+function deleteSong(matchIndex, songIndex){
+
+  let history = JSON.parse(localStorage.getItem("matchHistory") || "[]");
+
+  let realIndex = history.length - 1 - matchIndex;
+
+  let match = history[realIndex];
+
+  let temp = document.createElement("div");
+  temp.innerHTML = match.table;
+
+  let rows = temp.querySelectorAll("tr");
+
+  rows.forEach(row => {
+    if(row.children[songIndex]){
+      row.removeChild(row.children[songIndex]);
+    }
+  });
+
+  // ✅ 更新 table
+  history[realIndex].table = temp.innerHTML;
+
+  localStorage.setItem("matchHistory", JSON.stringify(history));
+
+  loadHistory();
+}
+
+</script>

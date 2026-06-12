@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>🎮 對戰主頁（卡片版）</title>
+
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+}
+
+/* 主容器 */
+.container {
+  display: flex;
+  justify-content: center;
+  gap: 80px;
+  margin-top: 20px;
+}
+
+/* 玩家區 */
+.column {
+  min-width: 260px;
+}
+
+/* 玩家名字 */
+.playerName {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* 卡片 */
+.card {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  margin: 10px auto;
+  width: 200px;
+  padding: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.card:hover {
+  background: #f2f2f2;
+}
+
+/* 曲名 */
+.card .title {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+/* 點擊變紅 */
+.selected {
+  border: 2px solid red;
+  border-radius : 6px;
+  background: #ffe5e5;
+}
+
+.song {
+  cursor: pointer;
+
+  padding: 12px 0;
+  margin-bottom: 8px;
+
+  line-height: 1.6;
+  font-size: 18px;
+}
+
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid #ccc;
+  padding: 10px;
+  min-width: 120px;
+  text-align: center;
+}
+
+input {
+  width: 120px;
+  padding: 8px;
+  font-size: 16px;
+  text-align: center;
+
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#finalResult {
+  margin-top: 20px;
+  font-size: 80px;
+  font-weight: bold;
+}
+
+.win {
+  background: #ffdddd;
+  border: 2px solid red;
+}
+
+/* ✅ 整體布局 */
+.layout {
+  display: flex;
+}
+
+/* ✅ 左側menu */
+
+.sidebar {
+  width: 200px;
+  height: 100vh;
+  background: #222;
+  color: white;
+  padding: 20px;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  text-align: center;   /* ⭐ */
+}
+
+.sidebar a {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+
+  width: 80%;
+  border-radius: 8px;
+
+  text-decoration: none;
+  color: white;
+  text-align: center;
+}
+
+.sidebar a:hover {
+  background: #444;
+}
+
+
+/* ✅ 右邊內容 */
+.main {
+  margin-left: 220px;   /* ✅ 留空間 */
+  padding: 20px;
+  width: 100%;
+}
+
+.sidebar a.active {
+  background: red;
+}
+
+#historyList .winner {
+  color: red;
+  font-weight: bold;
+}
+
+.winner {
+  color: red;
+  font-weight: bold;
+}
+#usedSongsBox {
+  margin-top: 20px;
+  padding: 15px;
+
+  border: 2px solid #ccc;
+  border-radius: 10px;
+
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* 每首歌 */
+.usedSongItem {
+  display: inline-block;
+  margin: 5px;
+  padding: 6px 10px;
+
+  background: #f2f2f2;
+  border-radius: 6px;
+}
+.usedSongItem {
+  display: inline-block;
+  margin: 6px;
+  padding: 8px 12px;
+
+  background: #eee;
+  border-radius: 8px;
+}
+
+.deleteSong {
+  margin-left: 6px;
+  color: red;
+  cursor: pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- ✅ 左側menu -->
+  <div class="sidebar">
+    <h2>🎮 Menu</h2>
+
+    <a href="home.html" >🏠 主頁</a>
+    <a href="index.html" class="active">⚔️ 對戰房間</a>
+    <a href="player1.html" >🎵 選歌房間</a>
+    <a href="history.html" >📜 比賽記錄</a>
+  </div>
+  <div class="main">
+<h1>🎮 對戰主頁</h1>
+
+房間：
+<input id="room" value="Match1">
+<button onclick="watch()">觀看</button>
+
+<h2>📢 狀態</h2>
+<p id="status">未進入房間</p>
+
+<h2>📜 結果</h2>
+
+<div class="container">
+  <div class="column">
+    <div id="p1Name" class="playerName"></div>
+    <div id="p1Songs"></div>
+  </div>
+
+  <div class="column">
+    <div id="p2Name" class="playerName"></div>
+    <div id="p2Songs"></div>
+  </div>
+</div>
+<button onclick="startGame()">🎮 比賽開始</button>
+<h2>📊 對戰表</h2>
+
+<table id="battleTable">
+</table>
+
+<h2>🎵 已對戰歌曲</h2>
+<div id="usedSongsBox"></div>
+
+<button onclick="calculateResult()">🏆 結算總分</button>
+
+<p id="finalResult"></p>
+
+  </div>
+</div>
+
+</body>
+
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.4/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.4/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBlb4V2VR5Wdn1dVAJLqbwe-8rxkJ_FsMQ",
+  authDomain: "maimai-8th.firebaseapp.com",
+  databaseURL: "https://maimai-8th-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "maimai-8th",
+  storageBucket: "maimai-8th.firebasestorage.app",
+  messagingSenderId: "903477320977",
+  appId: "1:903477320977:web:6d48bfd14a867c71f7c0b0",
+  measurementId: "G-84WER82DLQ"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+
+let currentRoomRef = null;
+let hasLoadedRoomData = false;
+
+function watch(){
+
+  let r = document.getElementById("room").value;
+  // ✅ ⭐ 停掉舊監聽
+  if(currentRoomRef){
+    currentRoomRef.off();
+  }
+
+  // ✅ ⭐ 清畫面（重點）
+  clearRoomUI();
+
+  // ✅ 新房間
+  currentRoomRef = db.ref("rooms/" + r + "/ready");
+
+  currentRoomRef.on("value", snap => {
+
+    let data = snap.val() || {};
+
+    let text = Object.keys(data)
+      .map(p => `${p}: ${data[p] ? "✅" : "⏳"}`)
+      .join(" | ");
+
+    document.getElementById("status").innerText = text;
+
+    if(Object.values(data).filter(v => v).length >= 2){
+      showBattle(r);
+    }
+
+  });
+  hasLoadedRoomData = false;
+}
+
+function showBattle(room){
+
+  db.ref("rooms/" + room).once("value").then(snapshot => {
+
+    let data = snapshot.val();
+
+    let players = Object.keys(data)
+      .filter(k => k !== "ready");
+
+    if(players.length < 2) return;
+
+    let p1 = players[0];
+    let p2 = players[1];
+
+    document.getElementById("p1Name").innerText = p1;
+    document.getElementById("p2Name").innerText = p2;
+
+    renderCards("p1Songs", data[p1]);
+    renderCards("p2Songs", data[p2]);
+
+    // ✅ ⭐ 只第一次載入房間資料
+    if(!hasLoadedRoomData){
+      loadRoomData();
+      hasLoadedRoomData = true;
+    }
+
+  });
+}
+
+
+// ✅ 卡片 render
+function renderCards(containerId, songs){
+
+  let container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  songs.forEach(song => {
+
+    let name = song.name || song;
+
+    let div = document.createElement("div");
+    div.className = "song";
+
+    div.innerText = name;
+
+    // ✅ 點擊變紅
+    div.onclick = () => {
+      div.classList.toggle("selected");
+    };
+
+    container.appendChild(div);
+  });
+}
+
+function generateTable(p1Name, p2Name){
+
+  let selectedSongs = document.querySelectorAll(".song.selected");
+
+  let songs = Array.from(selectedSongs).map(el => el.innerText);
+
+  if (songs.length === 0){
+    alert("請先選擇歌曲！");
+    return;
+  }
+
+  let table = document.getElementById("battleTable");
+  table.innerHTML = "";
+
+  // ✅ header
+  let header = "<tr><th>Player</th>";
+
+  songs.forEach(song => {
+    header += `<th>${song}</th>`;
+  });
+
+  header += "</tr>";
+
+  // ✅ player1
+  let row1 = `<tr><td>${p1Name}</td>`;
+  songs.forEach(() => {
+    row1 += `<td><input type="number" class="scoreInput" step="0.01" placeholder="分數"></td>`;
+  });
+  row1 += "</tr>";
+
+  // ✅ player2
+  let row2 = `<tr><td>${p2Name}</td>`;
+  songs.forEach(() => {
+    row2 += `<td><input type="number" class="scoreInput" step="0.01" placeholder="分數"></td>`;
+  });
+  row2 += "</tr>";
+
+  table.innerHTML = header + row1 + row2;
+  saveRoomData();
+}
+
+function startGame(){
+
+  let p1Name = document.getElementById("p1Name").innerText;
+  let p2Name = document.getElementById("p2Name").innerText;
+
+  generateTable(p1Name, p2Name);
+}
+
+/*function calculateResult(){
+
+  let table = document.getElementById("battleTable");
+  let rows = table.querySelectorAll("tr");
+
+  if(rows.length < 3) return;
+
+  let p1Name = rows[1].children[0].innerText;
+  let p2Name = rows[2].children[0].innerText;
+
+  let p1Score = 0;
+  let p2Score = 0;
+
+  // ✅ 計分
+  for(let i = 1; i < rows[1].children.length; i++){
+    let val = rows[1].children[i].querySelector("input").value;
+    p1Score += Number(val) || 0;
+  }
+
+  for(let i = 1; i < rows[2].children.length; i++){
+    let val = rows[2].children[i].querySelector("input").value;
+    p2Score += Number(val) || 0;
+  }
+
+  p1Score = Number(p1Score.toFixed(4));
+  p2Score = Number(p2Score.toFixed(4));
+
+  // ✅ 判勝負
+  let winner = "平手";
+
+  if(p1Score > p2Score){
+    winner = p1Name;
+  } else if(p2Score > p1Score){
+    winner = p2Name;
+  }
+
+  // ✅ ⭐ 正確顯示結果（已修好）
+  let resultHTML = `
+    ${p1Name} ${p1Score.toFixed(4)}<br>
+    VS<br>
+    ${p2Name} ${p2Score.toFixed(4)}<br>
+    勝者: <span class="winner">${winner}</span>
+  `;
+
+  document.getElementById("finalResult").innerHTML = resultHTML;
+
+  // ✅ 把 input value 寫入 HTML（給 history 用）
+  let inputs = document.querySelectorAll("#battleTable input");
+  inputs.forEach(input => {
+    input.setAttribute("value", input.value);
+  });
+
+  // ✅ 取得表格HTML
+  let tableHTML = document.getElementById("battleTable").outerHTML;
+
+  // ✅ 讀舊紀錄
+let historyRaw = localStorage.getItem("matchHistory");
+
+let history;
+
+try {
+  history = JSON.parse(historyRaw) || [];
+} catch (e) {
+  history = [];
+}
+
+
+  // ✅ 新Match
+  let matchName = `Match${history.length + 1}`;
+
+  history.push({
+    name: matchName,
+    table: tableHTML,
+    result: resultHTML
+  });
+
+  // ✅ 存回去
+  localStorage.setItem("matchHistory", JSON.stringify(history));
+
+  // ✅ 每首歌紅框勝者（保留你原功能）
+  for(let i = 1; i < rows[0].children.length; i++){
+
+    let p1Input = rows[1].children[i].querySelector("input");
+    let p2Input = rows[2].children[i].querySelector("input");
+
+    let p1Val = Number(p1Input.value) || 0;
+    let p2Val = Number(p2Input.value) || 0;
+
+    p1Input.classList.remove("win");
+    p2Input.classList.remove("win");
+
+    if(p1Val > p2Val){
+      p1Input.classList.add("win");
+    }
+    else if(p2Val > p1Val){
+      p2Input.classList.add("win");
+    }
+  }
+}
+  */
+ function calculateResult(){
+
+  let table = document.getElementById("battleTable");
+  let rows = table.querySelectorAll("tr");
+
+  if(rows.length < 3) return;
+
+  let p1Name = rows[1].children[0].innerText;
+  let p2Name = rows[2].children[0].innerText;
+
+  // ✅ 改成勝利局數
+  let p1Wins = 0;
+  let p2Wins = 0;
+
+  // ✅ 每一欄 = 一局
+  for(let i = 1; i < rows[0].children.length; i++){
+
+    let p1Input = rows[1].children[i].querySelector("input");
+    let p2Input = rows[2].children[i].querySelector("input");
+
+    let p1Val = Number(p1Input.value) || 0;
+    let p2Val = Number(p2Input.value) || 0;
+
+    // ✅ 清除舊樣式
+    p1Input.classList.remove("win");
+    p2Input.classList.remove("win");
+
+    // ✅ 判斷一局勝負
+    if(p1Val > p2Val){
+      p1Wins++;
+      p1Input.classList.add("win");
+    }
+    else if(p2Val > p1Val){
+      p2Wins++;
+      p2Input.classList.add("win");
+    }
+    // 平手唔加
+  }
+
+  // ✅ 判勝負（用勝場）
+  let winner = "平手";
+
+  if(p1Wins > p2Wins){
+    winner = p1Name;
+  } else if(p2Wins > p1Wins){
+    winner = p2Name;
+  }
+
+  // ✅ ⭐ 顯示（改成局數）
+  let resultHTML = `
+    ${p1Name} vs ${p2Name}<br>
+    勝利局數: ${p1Wins} : ${p2Wins}<br>
+    勝者: <span class="winner">${winner}</span>
+  `;
+
+  document.getElementById("finalResult").innerHTML = resultHTML;
+
+  // ✅ 保留你原本 history 功能
+  let inputs = document.querySelectorAll("#battleTable input");
+  inputs.forEach(input => {
+    input.setAttribute("value", input.value);
+  });
+
+  let tableHTML = document.getElementById("battleTable").outerHTML;
+
+  let historyRaw = localStorage.getItem("matchHistory");
+  let history;
+
+  try {
+    history = JSON.parse(historyRaw) || [];
+  } catch (e) {
+    history = [];
+  }
+
+  let matchName = `Match${history.length + 1}`;
+
+  history.push({
+    name: matchName,
+    table: tableHTML,
+    result: resultHTML
+  });
+
+  localStorage.setItem("matchHistory", JSON.stringify(history));
+  saveRoomData();
+}
+
+
+function loadUsedSongs(){
+
+  let history = JSON.parse(localStorage.getItem("matchHistory") || "[]");
+
+  let songSet = new Set();   // ✅ 去重
+
+  // ✅ 先收集所有歌曲
+  history.forEach(match => {
+
+    let temp = document.createElement("div");
+    temp.innerHTML = match.table;
+
+    let headers = temp.querySelectorAll("th");
+
+    headers.forEach((th, index) => {
+      if(index > 0){   // 跳過 Player
+        songSet.add(th.innerText.trim());   // ✅ ⭐ 這行才是重點
+      }
+    });
+
+  });
+
+  let container = document.getElementById("usedSongsBox");
+  container.innerHTML = "";
+
+  // ✅ 顯示歌曲 + X
+
+songSet.forEach(song => {
+
+  let div = document.createElement("div");
+  div.className = "usedSongItem";
+
+  let span = document.createElement("span");
+  span.innerText = song;
+
+  let btn = document.createElement("span");
+  btn.innerText = "❌";
+  btn.className = "deleteSong";
+
+  // ✅ ⭐ 用 JS綁事件（避免字串爆炸）
+  btn.onclick = () => deleteUsedSong(song);
+
+  div.appendChild(span);
+  div.appendChild(btn);
+
+  container.appendChild(div);
+
+});
+
+
+}
+
+function deleteUsedSong(songName){
+if(!confirm("確定刪除這首歌？")) return;
+  let history = JSON.parse(localStorage.getItem("matchHistory") || "[]");
+
+  history.forEach(match => {
+
+    let temp = document.createElement("div");
+    temp.innerHTML = match.table;
+
+    let rows = temp.querySelectorAll("tr");
+
+    if(rows.length < 1) return;
+
+    // ✅ 找出 song 的 column index（只在 header）
+    let headerCells = rows[0].children;
+
+    let deleteIndex = -1;
+
+    for(let i = 1; i < headerCells.length; i++){
+      if(headerCells[i].innerText.trim() === songName){
+        deleteIndex = i;
+        break;
+      }
+    }
+
+    if(deleteIndex === -1) return;
+
+    // ✅ 刪整欄
+    rows.forEach(row => {
+      if(row.children[deleteIndex]){
+        row.removeChild(row.children[deleteIndex]);
+      }
+    });
+
+    match.table = temp.innerHTML;
+
+  });
+
+  localStorage.setItem("matchHistory", JSON.stringify(history));
+
+  loadUsedSongs();
+}
+
+function getRoomKey(){
+  let room = document.getElementById("room").value.trim();
+  return "room_" + room;
+}
+
+function saveRoomData(){
+
+  let table = document.getElementById("battleTable");
+
+  // ✅ ⭐ 先把分數寫進 HTML（不能漏）
+  table.querySelectorAll("input").forEach(input => {
+    input.setAttribute("value", input.value);
+  });
+
+  let data = {
+    songs: selectedSongs,
+    table: table.innerHTML
+  };
+
+  localStorage.setItem(getRoomKey(), JSON.stringify(data));
+}
+
+function loadRoomData(){
+
+  let saved = localStorage.getItem(getRoomKey());
+
+  let table = document.getElementById("battleTable");
+
+  if(!saved){
+    selectedSongs = [];
+    table.innerHTML = "";
+    return;
+  }
+
+  let data = JSON.parse(saved);
+
+  // ✅ 歌單
+  selectedSongs = data.songs || [];
+
+  if(typeof renderSelectedSongs === "function"){
+    renderSelectedSongs();
+  }
+
+  // ✅ 表格
+  table.innerHTML = data.table || "";
+
+  // ✅ ⭐⭐ 還原分數（關鍵）
+  table.querySelectorAll("input").forEach(input => {
+
+    let val = input.getAttribute("value");
+
+    if(val !== null){
+      input.value = val;
+    }
+
+  });
+
+}
+
+function clearRoomUI(){
+
+  document.getElementById("p1Name").innerText = "";
+  document.getElementById("p2Name").innerText = "";
+
+  document.getElementById("p1Songs").innerHTML = "";
+  document.getElementById("p2Songs").innerHTML = "";
+
+  document.getElementById("battleTable").innerHTML = "";
+}
+
+
+loadUsedSongs();
+</script>
+
+</body>
+</html>

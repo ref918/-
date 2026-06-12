@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>🏠 主頁</title>
+<style>
+.layout {
+  display: flex;
+}
+
+.sidebar {
+  width: 200px;
+  height: 100vh;
+  background: #222;
+  color: white;
+  padding: 20px;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  text-align: center;   /* ⭐ */
+}
+
+.sidebar a {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+
+  width: 80%;
+  border-radius: 8px;
+
+  text-decoration: none;
+  color: white;
+  text-align: center;
+}
+
+.sidebar a:hover {
+  background: #444;
+}
+
+
+.main {
+  margin-left: 220px;
+  padding: 20px;
+}
+.sidebar a.active {
+  background: red;
+}
+
+/* ✅ 主頁背景 */
+.homeMain {
+  margin-left: 220px;
+
+  width: calc(100% - 220px);
+  height: 100vh;
+
+  background-image: url("pic/鹹魚杯8th.jpg");
+  background-size: cover;
+  background-position: center;
+
+  position: relative;
+}
+
+/* ✅ 中間字效果 */
+.overlay {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  text-align: center;
+}
+
+/* ✅ 標題 */
+.overlay h1 {
+  color: white;
+  font-size: 60px;
+  letter-spacing: 2px;
+
+  text-shadow: 0 0 20px rgba(0,0,0,0.6);
+}
+</style>
+
+<body>
+
+<div class="layout">
+
+  <!-- 左邊 -->
+  <div class="sidebar">
+    <h2>🎮 Menu</h2>
+    <a href="home.html" class="active">🏠 主頁</a>
+    <a href="index.html">⚔️ 對戰房間</a>
+    <a href="player1.html">🎵 選歌房間</a>
+    <a href="history.html">📜 比賽記錄</a>
+  </div>
+
+  <div class="homeMain">
+
+    <div class="overlay">
+    </div>
+
+  </div>
+
+</div>
+
+</body>
